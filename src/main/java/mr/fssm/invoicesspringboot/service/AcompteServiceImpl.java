@@ -3,13 +3,15 @@ package mr.fssm.invoicesspringboot.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import mr.fssm.invoicesspringboot.Dto.AcompteDto;
+import mr.fssm.invoicesspringboot.Mapper.AcompteMapperImpl;
+
 import mr.fssm.invoicesspringboot.entities.Acompte;
 import mr.fssm.invoicesspringboot.entities.Invoice;
 import mr.fssm.invoicesspringboot.exceptions.AcompteNotFoundException;
 import mr.fssm.invoicesspringboot.exceptions.InvoiceNotFoundException;
 import mr.fssm.invoicesspringboot.repository.AcompteRepo;
 import mr.fssm.invoicesspringboot.repository.InvoiceRepo;
-import org.modelmapper.ModelMapper;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,37 +23,37 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Transactional
 public class AcompteServiceImpl implements AcompteService {
+    private final AcompteMapperImpl dtoMapper;
     private final AcompteRepo acompteRepo;
     private final InvoiceRepo invoiceRepo;
-    ModelMapper modelMapper = new ModelMapper();
+
     @Override
     public AcompteDto createAcompte(AcompteDto acompteDto) throws InvoiceNotFoundException {
-        log.info("Saving new Acompte");
+
         Invoice invoice = invoiceRepo.findByCodeInvoice(acompteDto.getInvoice().getCodeInvoice());
         if (invoice == null){
             throw new InvoiceNotFoundException("Invoice not found");
         }
-        Acompte acompte = modelMapper.map(acompteDto, Acompte.class);
+        Acompte acompte = dtoMapper.fromAcompteDto(acompteDto);
         acompte.setInvoice(invoice);
         acompte.setDatePays(new Date());
 
         Acompte newAcompte = acompteRepo.save(acompte);
-        AcompteDto savedAcompte= modelMapper.map(newAcompte, AcompteDto.class);
-        return savedAcompte;
+        log.info("Saving new Acompte");
+        return dtoMapper.fromAcompte(newAcompte);
     }
     @Override
     public AcompteDto getAcompte(Long id) throws AcompteNotFoundException {
         Acompte acompte = acompteRepo.findById(id)
                 .orElseThrow(()->new AcompteNotFoundException("Acompte not found"));
-        return modelMapper.map(acompte, AcompteDto.class);
+        return dtoMapper.fromAcompte(acompte);
     }
     @Override
     public List<AcompteDto> listAcompte() {
         List <Acompte> acomptes = acompteRepo.findAll();
-        List <AcompteDto> acompteDtos = acomptes.stream()
-                .map(acompte -> modelMapper.map(acompte, AcompteDto.class))
+        return acomptes.stream()
+                .map(dtoMapper::fromAcompte)
                 .collect(Collectors.toList());
-        return acompteDtos;
     }
     @Override
     public AcompteDto updateAcompte(Long id, AcompteDto acompteDto) throws AcompteNotFoundException {
@@ -60,8 +62,7 @@ public class AcompteServiceImpl implements AcompteService {
                 .orElseThrow(()->new AcompteNotFoundException("Reglement not found"));
         Invoice invoice = invoiceRepo.findByCodeInvoice(acompteDto.getInvoice().getCodeInvoice());
         acompte.setInvoice(invoice);
-        acompte = modelMapper.map(acompteDto, Acompte.class);
         Acompte savedAcompte = acompteRepo.save(acompte);
-        return modelMapper.map(savedAcompte, AcompteDto.class);
+        return dtoMapper.fromAcompte(savedAcompte);
     }
 }

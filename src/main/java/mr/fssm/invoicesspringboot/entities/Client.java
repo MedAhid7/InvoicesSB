@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 import mr.fssm.invoicesspringboot.Enum.TypeClient;
 
 import javax.persistence.*;
-import java.util.Collection;
+
 import java.util.List;
 
 @Entity
@@ -16,9 +16,7 @@ import java.util.List;
 public class Client extends Personne{
     @Enumerated(EnumType.STRING)
     private TypeClient typeClient;
-
-    @OneToOne(mappedBy = "user",cascade = CascadeType.ALL,fetch = FetchType.EAGER)
-    private Logo_Client logo;
+    private String logo;
     @OneToMany(mappedBy = "client")
     private List<Devis>  devis;
 }
